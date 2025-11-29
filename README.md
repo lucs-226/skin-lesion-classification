@@ -310,17 +310,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Kaggle**: For hosting the dataset
 - **PyTorch & TensorFlow**: For deep learning frameworks
 
-## 📧 Contact
 
-- **Author**: Your Name
-- **Email**: your.email@example.com
-- **GitHub**: [@yourusername](https://github.com/yourusername)
-- **Project Link**: [https://github.com/yourusername/skin-lesion-classification](https://github.com/yourusername/skin-lesion-classification)
-
-## 🌟 Star History
-
-If you find this project useful, please consider giving it a star ⭐
-
----
-
-**Made with ❤️ for medical image analysis**
