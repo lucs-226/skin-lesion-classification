@@ -2,18 +2,18 @@
 
 An end-to-end Deep Learning pipeline for multi-class skin cancer classification using the **HAM10000** dataset. This repository implements a robust training strategy focusing on reproducibility, data leakage prevention, and class imbalance handling.
 
-## 🎯 Project Objective
+### Project Objective
 The primary goal is to classify dermoscopic images into one of 7 diagnostic categories (e.g., Melanoma, Nevus, Basal Cell Carcinoma).
 Beyond high accuracy, the engineering objective was to build a **modular, production-ready codebase** capable of iterating quickly over different architectures and hyperparameters.
 
-## 🧠 Model Architecture: Why EfficientNet?
+### Model Architecture: Why EfficientNet?
 We selected **EfficientNet-B3** as the backbone for this task.
 
 * **Compound Scaling:** Unlike ResNets, which scale depth/width arbitrarily, EfficientNet uniformly scales depth, width, and resolution. This results in better feature extraction for the specific input size ($300 \times 300$).
 * **Parameter Efficiency:** B3 offers a superior accuracy-to-parameter ratio compared to VGG or ResNet50, reducing training time and inference latency without sacrificing performance.
 * **Transfer Learning:** Pre-trained weights (ImageNet) allow the model to leverage low-level feature detectors (edges, textures) immediately, which is crucial given the limited size of medical datasets.
 
-## ⚙️ Strategy & Methodology
+### Strategy & Methodology
 
 ### 1. Data Integrity & Leakage Prevention
 The HAM10000 dataset contains multiple images of the *same* lesion. A naive random split would place the same lesion in both Train and Validation sets, leading to **Data Leakage** and inflated metrics.
@@ -31,7 +31,7 @@ To prevent overfitting on the training set:
 
 ---
 
-## ⚠️ The Challenge: Domain Shift & Generalization
+### The Challenge: Domain Shift & Generalization
 While the model achieves high metrics (Accuracy/F1) on the validation set, we observed a **Domain Shift** phenomenon when evaluating on external data or conceptually different subsets.
 
 ### The Problem
@@ -46,7 +46,7 @@ Medical images are highly sensitive to the acquisition device (camera sensor, li
 
 ---
 
-## 📂 Repository Structure
+### Repository Structure
 ```text
 skin-cancer-classification/
 ├── data/                   # Dataset (HAM10000)
