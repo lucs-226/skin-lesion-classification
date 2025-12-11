@@ -5,7 +5,7 @@ __pycache__/
 .env
 venv/
 
-# Large files
+# Ignore heavy data and output folders
 data/*
 output/*
 !data/.gitkeep
