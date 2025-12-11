@@ -87,7 +87,7 @@ if __name__ == "__main__":
             
             print(f"Ep {epoch+1:02d} | T: {t_loss:.4f} | V: {v_loss:.4f} | Best: {best_loss:.4f}")
         
-        # --- OOF Inference Logic (Exactly like notebook) ---
+        # --- OOF Inference Logic ---
         print("Running TTA on Validation Fold...")
         # Reload best model for this fold
         model.load_state_dict(torch.load(save_path, map_location=DEVICE))
