@@ -2,8 +2,8 @@ import torch
 from pathlib import Path
 
 # --- IDs (FILL THESE) ---
-MAIN_DATA_ID = "YOUR_MAIN_DATASET_ZIP_ID"
-EXTERNAL_DATA_ID = "YOUR_DERMX_ZIP_ID"
+MAIN_DATA_ID = "https://drive.google.com/file/d/1_-9TkAOGK4DpSZPK45QbOfPKprmu3K1f/view?usp=drive_link"
+EXTERNAL_DATA_ID = "https://drive.google.com/file/d/1nmWhcZTJgfhhEq1AfHjpQxqS5Pn-FMrt/view?usp=drive_link"
 
 # --- Paths ---
 BASE_DIR = Path(__file__).resolve().parent.parent
