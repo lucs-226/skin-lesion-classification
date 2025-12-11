@@ -1,22 +1,39 @@
 import gradio as gr
-from src.ensemble import EnsemblePredictor
-from src.utils import download_weights
-from src.config import OUTPUT_DIR, WEIGHTS_ZIP_ID
+import torch
+from src.config import OUTPUT_DIR, FOLDS, DEVICE, LABELS
+from src.model import build_model
+from src.data import get_transforms
+from src.utils import run_tta
 
-# 1. Setup: Ensure weights are available
-download_weights(WEIGHTS_ZIP_ID, OUTPUT_DIR)
+# Load models globally once
+models = []
+transform = get_transforms('valid')
 
-# 2. Initialize Predictor
-predictor = EnsemblePredictor()
+def load_ensemble():
+    if not models:
+        for i in range(FOLDS):
+            m = build_model()
+            # Assumes weights are present (trained or downloaded)
+            m.load_state_dict(torch.load(OUTPUT_DIR / f"effnetb3_fold{i}.pth", map_location=DEVICE))
+            m.eval()
+            models.append(m)
 
-# 3. Define Interface
-demo = gr.Interface(
-    fn=predictor.predict_image,
-    inputs=gr.Image(type="pil", label="Dermoscopic Image"),
-    outputs=gr.Label(num_top_classes=3),
-    title="Skin Lesion Ensemble Classifier",
-    description="Inference based on EfficientNet-B3 Ensemble (5 Folds) + TTA."
-)
+def predict(image):
+    if not models: load_ensemble()
+    
+    img_tensor = transform(image).unsqueeze(0).to(DEVICE)
+    probs = []
+    
+    with torch.no_grad():
+        for m in models:
+            p = run_tta(m, img_tensor)
+            probs.append(p.cpu().numpy()[0])
+            
+    avg = np.mean(probs, axis=0)
+    return {LABELS[i]: float(avg[i]) for i in range(len(LABELS))}
+
+demo = gr.Interface(fn=predict, inputs=gr.Image(type="pil"), outputs=gr.Label())
 
 if __name__ == "__main__":
+    load_ensemble()
     demo.launch()
