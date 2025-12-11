@@ -1,65 +1,49 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
-import random
 import os
-import matplotlib.pyplot as plt
+import random
+import numpy as np
+import torch
+import gdown
+import zipfile
 
-def set_seed(seed: int = 42):
-    """Ensures experiment reproducibility."""
+def seed_everything(seed):
+    """Exact reproduction of the notebook seeding."""
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
 
-class FocalLoss(nn.Module):
-    """Handles class imbalance by down-weighting easy examples."""
-    def __init__(self, alpha=1, gamma=2, reduction='mean'):
-        super().__init__()
-        self.alpha = alpha
-        self.gamma = gamma
-        self.reduction = reduction
-
-    def forward(self, inputs, targets):
-        ce_loss = F.cross_entropy(inputs, targets, reduction='none')
-        pt = torch.exp(-ce_loss)
-        focal_loss = self.alpha * (1 - pt) ** self.gamma * ce_loss
+def download_and_extract(file_id, zip_path, extract_to):
+    """Handles Drive download and extraction."""
+    if not os.path.exists(extract_to):
+        print(f"Downloading {zip_path}...")
+        url = f'https://drive.google.com/uc?id={file_id}'
+        gdown.download(url, str(zip_path), quiet=False)
         
-        if self.reduction == 'mean': return focal_loss.mean()
-        return focal_loss.sum()
+        print("Extracting...")
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_to)
 
-def plot_smoothed_loss(history, smooth=0.85):
+def run_tta(model, loader, device):
     """
-    Plots training and validation loss with exponential smoothing.
-    Input: history = {'train_loss': [...], 'val_loss': [...]}
+    Test Time Augmentation: Average of Original + Horizontal Flip.
+    Exact implementation from the notebook.
     """
-    def _smooth(scalars, weight):
-        last = scalars[0]
-        smoothed = []
-        for point in scalars:
-            smoothed_val = last * weight + (1 - weight) * point
-            smoothed.append(smoothed_val)
-            last = smoothed_val
-        return smoothed
-
-    epochs = range(1, len(history['train_loss']) + 1)
-    
-    plt.figure(figsize=(10, 6))
-    # Raw data (transparent)
-    plt.plot(epochs, history['train_loss'], alpha=0.3, color='blue', label='Train Raw')
-    plt.plot(epochs, history['val_loss'], alpha=0.3, color='orange', label='Val Raw')
-    
-    # Smoothed data (solid)
-    plt.plot(epochs, _smooth(history['train_loss'], smooth), color='blue', lw=2, label='Train Smooth')
-    plt.plot(epochs, _smooth(history['val_loss'], smooth), color='orange', lw=2, label='Val Smooth')
-    
-    plt.title("Training Dynamics")
-    plt.xlabel("Epochs")
-    plt.ylabel("Loss")
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-    plt.show()
+    model.eval()
+    probs = []
+    with torch.no_grad():
+        for images, _ in loader:
+            images = images.to(device)
+            
+            # Forward 1: Original
+            p1 = model(images).softmax(1)
+            
+            # Forward 2: Horizontal Flip
+            p2 = model(torch.flip(images, dims=[3])).softmax(1)
+            
+            # Average
+            avg_p = (p1 + p2) / 2.0
+            probs.append(avg_p.cpu().numpy())
+            
+    return np.concatenate(probs)
