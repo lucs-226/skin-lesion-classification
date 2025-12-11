@@ -1,7 +1,12 @@
+# Heavy files
+data/*
+output/*
+!data/.gitkeep
+!output/.gitkeep
+
+# System & Cache
 __pycache__/
-*.py[cod]
+*.pyc
 .ipynb_checkpoints/
-data/
-output/
 .env
-.DS_Store
+venv/
