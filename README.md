@@ -49,7 +49,7 @@ To address this, we integrated **Explainable AI (XAI)** techniques:
 ## 📂 Repository Structure
 ```text
 skin-cancer-classification/
-├── data/                   # Dataset storage (Ignored by Git)
+├── data/                   # Dataset storage
 ├── output/                 # Model checkpoints & Logs
 ├── src/
 │   ├── config.py           # Centralized Hyperparameters & Paths
