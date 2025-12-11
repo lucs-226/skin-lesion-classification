@@ -1,12 +1,12 @@
-# Skin Lesion Classification (EfficientNet-B3)
+### Skin Lesion Classification (EfficientNet-B3)
 
-An end-to-end Deep Learning pipeline for multi-class skin cancer classification using the **HAM10000** dataset. This repository implements a robust training strategy focusing on reproducibility, data leakage prevention, and class imbalance handling.
+An end-to-end Deep Learning pipeline for multi-class skin cancer classification using the **HAM10000** dataset. This repository implements a robust training strategy focusing on reproducibility, data leakage prevention, class imbalance handling, and **model explainability**.
 
 ### Project Objective
 The primary goal is to classify dermoscopic images into one of 7 diagnostic categories (e.g., Melanoma, Nevus, Basal Cell Carcinoma).
-Beyond high accuracy, the engineering objective was to build a **modular, production-ready codebase** capable of iterating quickly over different architectures and hyperparameters.
+Beyond high accuracy, the engineering objective was to build a **modular, production-ready codebase** capable of iterating quickly over different architectures and hyperparameters, bridging the gap between experimental notebooks and professional engineering.
 
-### Model Architecture: Why EfficientNet?
+## 🧠 Model Architecture: Why EfficientNet?
 We selected **EfficientNet-B3** as the backbone for this task.
 
 * **Compound Scaling:** Unlike ResNets, which scale depth/width arbitrarily, EfficientNet uniformly scales depth, width, and resolution. This results in better feature extraction for the specific input size ($300 \times 300$).
@@ -26,35 +26,40 @@ The dataset is heavily skewed towards Nevi ($nv$) and huge class disparity exist
 
 ### 3. Regularization & Augmentation
 To prevent overfitting on the training set:
-* **TTA (Test Time Augmentation):** (Optional in inference) Averaging predictions over augmented versions of the input.
+* **TTA (Test Time Augmentation):** Averaging predictions over augmented versions of the input during inference.
 * **Transforms:** Rotation, flipping, and color jittering to force the model to learn invariant features rather than memorizing orientation or lighting.
 
 ---
 
-### The Challenge: Domain Shift & Generalization
-While the model achieves high metrics (Accuracy/F1) on the validation set, we observed a **Domain Shift** phenomenon when evaluating on external data or conceptually different subsets.
+### The Challenge: Domain Shift & Explainability
+While the model achieves high metrics (Accuracy/F1) on the validation set, we observed a **Domain Shift** phenomenon when evaluating on external data. Medical images are highly sensitive to the acquisition device (camera sensor, lighting, dermoscope type).
 
 ### The Problem
-Medical images are highly sensitive to the acquisition device (camera sensor, lighting, dermoscope type). The model tends to learn "shortcuts"—associating specific lighting conditions or artifacts (e.g., rulers, gel bubbles) with a class, rather than the pathology itself.
+The model tends to learn "shortcuts"—associating specific lighting conditions or artifacts (e.g., rulers, gel bubbles, dark corners) with a class, rather than the pathology itself.
 * **Observation:** The distribution of the training data (HAM10000) does not perfectly match real-world clinical inputs (Covariate Shift).
 * **Impact:** Validation scores are likely optimistic compared to real-world deployment performance.
 
-### Mitigation Strategies Implemented
-1.  **Heavy Color Jittering:** Randomizing brightness and contrast during training to reduce dependency on specific lighting conditions.
-2.  **Stratified K-Fold:** validating across 5 different splits to ensure the model isn't just lucky on one specific data subset.
-3.  **Conservative Model Selection:** We save checkpoints based on Validation Loss (a proxy for calibration) rather than just Accuracy.
+### Mitigation & Verification (XAI)
+To address this, we integrated **Explainable AI (XAI)** techniques:
+1.  **Grad-CAM Integration:** We implemented Gradient-weighted Class Activation Mapping to visualize *where* the model is looking.
+2.  **Audit Strategy:** If the heatmap highlights artifacts (e.g., a ruler) instead of the lesion, the prediction is discarded as unreliable, even if the confidence score is high.
 
 ---
 
-### Repository Structure
+## 📂 Repository Structure
 ```text
 skin-cancer-classification/
-├── data/                   # Dataset (HAM10000)
+├── data/                   # Dataset storage (Ignored by Git)
 ├── output/                 # Model checkpoints & Logs
 ├── src/
-│   ├── config.py           # Centralized Hyperparameters
-│   ├── data.py             # Data Loading & Preprocessing
-│   ├── model.py            # EfficientNet-B3 Definition
-│   ├── train.py            # Training Loop (K-Fold)
-│   ├── predict.py          # Inference Script
-│   └── utils.py            # Helper functions
+│   ├── config.py           # Centralized Hyperparameters & Paths
+│   ├── data.py             # Data Loading, Cleaning & Transforms
+│   ├── download_data.py    # Automated Kaggle Download Script
+│   ├── model.py            # EfficientNet Architecture Definition
+│   ├── train.py            # Main Training Loop (K-Fold CV)
+│   ├── predict.py          # CLI Inference Script
+│   ├── xai.py              # Explainable AI (Grad-CAM & Visualization)
+│   ├── app.py              # Interactive Web Demo (Gradio)
+│   └── utils.py            # Helper functions (Seed, FocalLoss, Plotting)
+├── requirements.txt        # Python Dependencies
+└── README.md               # Documentation
