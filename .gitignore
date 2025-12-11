@@ -1,12 +1,12 @@
-# Heavy files
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+.env
+venv/
+
+# Large files
 data/*
 output/*
 !data/.gitkeep
 !output/.gitkeep
-
-# System & Cache
-__pycache__/
-*.pyc
-.ipynb_checkpoints/
-.env
-venv/
