@@ -47,19 +47,16 @@ To address this, we integrated **Explainable AI (XAI)** techniques:
 ---
 
 ## 📂 Repository Structure
-```text
-skin-cancer-classification/
-├── data/                   # Dataset storage
-├── output/                 # Model checkpoints & Logs
-├── src/
-│   ├── config.py           # Centralized Hyperparameters & Paths
-│   ├── data.py             # Data Loading, Cleaning & Transforms
-│   ├── download_data.py    # Automated Kaggle Download Script
-│   ├── model.py            # EfficientNet Architecture Definition
-│   ├── train.py            # Main Training Loop (K-Fold CV)
-│   ├── predict.py          # CLI Inference Script
-│   ├── xai.py              # Explainable AI (Grad-CAM & Visualization)
-│   ├── app.py              # Interactive Web Demo (Gradio)
-│   └── utils.py            # Helper functions (Seed, FocalLoss, Plotting)
-├── requirements.txt        # Python Dependencies
-└── README.md               # Documentation
+repo/
+├── .gitignore
+├── requirements.txt
+├── app.py                  # Entry point per Inferenza (Gradio)
+├── train_pipeline.py       # (Opzionale) Se vuoi rieseguire il training loop
+└── src/
+    ├── __init__.py
+    ├── config.py           # Iperparametri e Path
+    ├── dataset.py          # Classe SkinDataset e Trasformazioni
+    ├── model.py            # build_model e FocalLoss
+    ├── engine.py           # Trainer class e funzioni di training
+    ├── ensemble.py         # Logica Ensemble Inference + TTA
+    └── utils.py            # Seeding e utility generiche
