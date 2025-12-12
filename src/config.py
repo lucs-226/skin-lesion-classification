@@ -1,23 +1,32 @@
 import torch
 from pathlib import Path
 
-# --- IDs (FILL THESE) ---
-MAIN_DATA_ID = "https://drive.google.com/file/d/1_-9TkAOGK4DpSZPK45QbOfPKprmu3K1f/view?usp=drive_link"
-EXTERNAL_DATA_ID = "https://drive.google.com/file/d/1nmWhcZTJgfhhEq1AfHjpQxqS5Pn-FMrt/view?usp=drive_link"
+# --- Google Drive IDs ---
+# Main Dataset (HAM10000 + Metadata.csv)
+MAIN_DATA_ID = "1_-9TkAOGK4DpSZPK45QbOfPKprmu3K1f"
+# External Test Dataset (Unified/DermX)
+EXTERNAL_DATA_ID = "1nmWhcZTJgfhhEq1AfHjpQxqS5Pn-FMrt"
 
-# --- Paths ---
+# --- Local Directories ---
+# Dynamically created to keep repo clean
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 OUTPUT_DIR = BASE_DIR / "output"
-PLOTS_DIR = OUTPUT_DIR / "eda_plots"
 
 DATA_DIR.mkdir(exist_ok=True)
 OUTPUT_DIR.mkdir(exist_ok=True)
-PLOTS_DIR.mkdir(exist_ok=True)
 
-# Files
-TRAIN_CSV = DATA_DIR / "metadata.csv"
-TEST_CSV = DATA_DIR / "external_dermx" / "metadata.csv" # Adjust relative path
+# --- File Paths ---
+# Main training CSV (used for training labels and test set blacklisting)
+TRAIN_CSV_PATH = DATA_DIR / "HAM10000_metadata.csv"
+TRAIN_IMG_DIRS = [
+    DATA_DIR / "HAM10000_images_part_1",
+    DATA_DIR / "HAM10000_images_part_2"
+]
+
+# External Test Path (Folder structure extracted from zip)
+# Assuming the external zip extracts to a folder named 'Unified_dataset' or 'val'
+TEST_DATA_DIR = DATA_DIR / "Unified_dataset" / "val" 
 
 # --- Hyperparameters ---
 SEED = 1526
@@ -29,11 +38,8 @@ EPOCHS = 15
 LR = 3e-4
 WEIGHT_DECAY = 1e-4
 NUM_WORKERS = 2
-
-# --- Compute ---
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # --- Mappings ---
 LABELS = ['akiec', 'bcc', 'bkl', 'df', 'mel', 'nv', 'vasc']
 CLASSES_MAP = {label: i for i, label in enumerate(LABELS)}
-ID2LABEL = {i: label for label, i in CLASSES_MAP.items()}
