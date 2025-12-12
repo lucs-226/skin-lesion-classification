@@ -1,19 +1,49 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
-from src.config import PLOTS_DIR, LABELS
+import numpy as np
+from PIL import Image
 
-def plot_class_distribution(df, target_col='label', title='Class Distribution'):
-    plt.figure(figsize=(10, 6))
-    sns.countplot(x=target_col, data=df, order=LABELS)
-    plt.title(title)
-    plt.savefig(PLOTS_DIR / "class_distribution.png")
-    plt.close()
+def analyze_class_imbalance(df, class_col='dx'):
+    plt.figure(figsize=(10, 8))
+    counts = df[class_col].value_counts().sort_values(ascending=False)
+    total = len(df)
+    
+    explode = [0.05] * len(counts)
+    explode[0] = 0.15
+    # Use a colormap
+    colors = plt.cm.Spectral(np.linspace(0, 1, len(counts)))
+    
+    plt.pie(
+        counts.values,
+        autopct=lambda pct: f"{pct:.1f}%",
+        startangle=90,
+        explode=explode,
+        shadow=True,
+        colors=colors,
+        labels=counts.index
+    )
+    plt.title(f"Class Distribution (Total: {total})")
+    plt.show()
 
-def plot_confusion_matrix(cm, filename="confusion_matrix.png"):
+def show_class_samples(df, class_col='dx', path_col='path'):
+    classes = sorted(df[class_col].unique())
+    fig, axes = plt.subplots(1, len(classes), figsize=(20, 3))
+    
+    for i, cls in enumerate(classes):
+        subset = df[df[class_col] == cls]
+        if len(subset) > 0:
+            sample_path = subset[path_col].iloc[0]
+            img = Image.open(sample_path)
+            axes[i].imshow(img)
+            axes[i].set_title(cls)
+            axes[i].axis('off')
+    plt.show()
+
+def plot_confusion_matrix(cm, class_names):
     plt.figure(figsize=(10, 8))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
-                xticklabels=LABELS, yticklabels=LABELS)
-    plt.ylabel('True Label')
-    plt.xlabel('Predicted Label')
-    plt.savefig(PLOTS_DIR / filename)
-    plt.close()
+                xticklabels=class_names, yticklabels=class_names)
+    plt.title('Confusion Matrix')
+    plt.ylabel('True')
+    plt.xlabel('Predicted')
+    plt.show()
