@@ -1,18 +1,16 @@
 import torch
-import torch.nn.functional as F
 import numpy as np
 import cv2
 
 class GradCAM:
     def __init__(self, model, target_layer):
         self.model = model
-        self.target_layer = target_layer
         self.gradients = None
         self.activations = None
         
-        # Register hooks
-        self.target_layer.register_forward_hook(self.save_activation)
-        self.target_layer.register_full_backward_hook(self.save_gradient)
+        # Hooks
+        target_layer.register_forward_hook(self.save_activation)
+        target_layer.register_full_backward_hook(self.save_gradient)
 
     def save_activation(self, module, input, output):
         self.activations = output
@@ -20,47 +18,40 @@ class GradCAM:
     def save_gradient(self, module, grad_input, grad_output):
         self.gradients = grad_output[0]
 
-    def __call__(self, x, class_idx=None):
-        # 1. Forward Pass
+    def __call__(self, x, class_idx):
+        # Forward
         output = self.model(x)
-        
-        if class_idx is None:
-            class_idx = torch.argmax(output, dim=1)
-            
-        # 2. Backward Pass
         self.model.zero_grad()
+        
+        # Backward target
         target = output[0, class_idx]
         target.backward()
-        
-        # 3. Generate Heatmap
-        gradients = self.gradients.cpu().data.numpy()[0]
-        activations = self.activations.cpu().data.numpy()[0]
-        
-        # Global Average Pooling of Gradients (Weights)
-        weights = np.mean(gradients, axis=(1, 2))
-        
-        # Weighted combination of feature maps
-        cam = np.zeros(activations.shape[1:], dtype=np.float32)
-        for i, w in enumerate(weights):
-            cam += w * activations[i]
-            
-        # ReLU & Normalization
-        cam = np.maximum(cam, 0)
-        cam = cv2.resize(cam, (x.shape[3], x.shape[2]))
-        cam = cam - np.min(cam)
-        cam = cam / np.max(cam)
-        
-        return cam
 
-def overlay_heatmap(img_pil, heatmap, alpha=0.5, colormap=cv2.COLORMAP_JET):
-    """Overlays the heatmap on the original PIL image."""
+        # Generate CAM
+        pooled_gradients = torch.mean(self.gradients, dim=[0, 2, 3])
+        activation = self.activations[0]
+        
+        for i in range(activation.shape[0]):
+            activation[i, :, :] *= pooled_gradients[i]
+            
+        heatmap = torch.mean(activation, dim=0).cpu().detach().numpy()
+        heatmap = np.maximum(heatmap, 0)
+        
+        if np.max(heatmap) != 0:
+            heatmap /= np.max(heatmap)
+            
+        return heatmap
+
+def overlay_heatmap(img_pil, heatmap):
     img_np = np.array(img_pil)
+    # Resize heatmap to match image dimensions
+    heatmap = cv2.resize(heatmap, (img_np.shape[1], img_np.shape[0]))
     
-    # Convert heatmap to RGB 
-    heatmap_uint8 = np.uint8(255 * heatmap)
-    heatmap_colored = cv2.applyColorMap(heatmap_uint8, colormap)
-    heatmap_colored = cv2.cvtColor(heatmap_colored, cv2.COLOR_BGR2RGB)
+    # Convert to RGB color map
+    heatmap = np.uint8(255 * heatmap)
+    heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+    heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
     
     # Overlay
-    overlay = cv2.addWeighted(img_np, 1 - alpha, heatmap_colored, alpha, 0)
+    overlay = cv2.addWeighted(img_np, 0.6, heatmap, 0.4, 0)
     return overlay
